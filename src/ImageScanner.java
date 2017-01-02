@@ -11,15 +11,25 @@ import java.io.IOException;
  * Time: 2:26 PM
  * To change this template use File | Settings | File Templates.
  */
+
+//Class to scan image and return traversable map
 public class ImageScanner {
 
-//    public static void main(String[] args){
-//        scanImage("",100,100);
-//    }
 
+    /**
+     * Reads image and returns 2D array of 1s and 0s, 1 represents a wall, 0 is an open space
+     * @param filepath filepath to image to scan
+     * @param shadows boolean to handle shadows
+     * @param mapHeight expected height of 2D array
+     * @param mapWidth expected width of 2D array
+     * @return
+     */
      public static int[][] scanImage(String filepath,boolean shadows, int mapHeight,int mapWidth){
          BufferedImage img = null;
+
+         //Do-while loop used to allow use of break when correct file is found
          do{
+             //Load image file, try several files incase filepath is invalid
              try {
                  File f = new File(System.getProperty("user.dir")+"/src/"+filepath);
                  if (f.exists()){img = ImageIO.read(f);break;}
@@ -41,6 +51,7 @@ public class ImageScanner {
 
         int[][] newMap = new int[mapHeight][mapWidth];
 
+         //Old scanning code
 //         //clipping undesired borders
 //         int startx;
 //         int starty;
@@ -71,29 +82,35 @@ public class ImageScanner {
 
 
         //Analysing image to create maze
-        int xScale = Math.round(img.getWidth()/(float)(mapWidth));
-        int yScale = Math.round(img.getHeight()/(float)(mapHeight));
-        int whiteTile = 0;
-        int blackTile = 0;
+
+         //Init variables for scanning
+         int xScale = Math.round(img.getWidth()/(float)(mapWidth)); //number of image pixels per tile in the grid (since image resolution is always larger than grid size, some compression is needed)
+         int yScale = Math.round(img.getHeight()/(float)(mapHeight));
+         int whiteTile = 0;
+         int blackTile = 0;
          System.out.println(xScale+" "+yScale);
          System.out.println(mapWidth+" "+mapHeight);
-        //For each tile in the grid
-        for (int x = 0;x<mapWidth;x++){
+
+         //For each tile in the grid
+         for (int x = 0;x<mapWidth;x++){
             for (int y = 0;y<mapHeight;y++){
                 whiteTile=0;
                 blackTile=0;
+                //For each pixel in the image within the tile
                 for (int addx=0;addx<xScale;addx++){
                     for (int addy=0;addy<yScale;addy++){
+                        //If current pixel is out of bounds, continue
                         if (x*xScale+addx>img.getWidth()-1 ||y*yScale+addy>img.getHeight()-1){continue;}
+                        //If current pixel is white, add one to the whileTile counter
                         if (img.getRGB(x*xScale+addx,y*yScale+addy)==Color.white.getRGB()){
                             whiteTile++;
-                        }else{
+                        }else{ //else increment blackTile counter
                             blackTile++;
                         }
-
                     }
 
                 }
+                //Larger number wins the tile
                 if (blackTile>=whiteTile && blackTile!=0){
                     newMap[y][x]=1;
                 }else{
@@ -104,10 +121,11 @@ public class ImageScanner {
             }
         }
 
-        if (img.getWidth()%mapWidth!=0 || img.getHeight()%mapHeight!=0){
-            if (img.getWidth()%mapWidth!=0){xScale=img.getWidth()%mapWidth;}
-            if (img.getHeight()%mapHeight!=0){yScale=img.getHeight()%mapHeight;}
-        }
+         //Old scaling code
+//        if (img.getWidth()%mapWidth!=0 || img.getHeight()%mapHeight!=0){
+//            if (img.getWidth()%mapWidth!=0){xScale=img.getWidth()%mapWidth;}
+//            if (img.getHeight()%mapHeight!=0){yScale=img.getHeight()%mapHeight;}
+//        }
 
         return newMap;
      }

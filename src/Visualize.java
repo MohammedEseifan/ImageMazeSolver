@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 
+//Initial proof of concept for drawing map from text file
+@Deprecated
 public class Visualize extends JComponent {
     private static int diameter = 20;
 

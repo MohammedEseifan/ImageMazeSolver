@@ -13,18 +13,34 @@ import java.util.Random;
  * User: Mohammed
  * Date: 02/02/14
  * Time: 1:54 PM
- * To change this template use File | Settings | File Templates.
+ *
+ * ####################################################################################
+ *                                      Purpose :
+ * Program to experiment with path finding and Breadth first search. Takes in
+ * an image of a maze and converts it into an interactive graphic the user can play with.
+ * Allows user to click to assign the 'enemy' a new target, then illustrates shortest
+ * path and animates the enemy travelling to it. Also has an 'auto' mode that will
+ * automatically assign the enemy a target and navigate towards it. Lastly has an edit
+ * mode that allows the user to edit the maze by adding or removing walls to see how the
+ * enemy's path finding will react.
+ * ######################################################################################
+ *
  */
+
+//Main class that handles GUI and user interaction
 public class GameProof extends JComponent implements MouseListener, MouseMotionListener, ActionListener, KeyListener {
 
-    static int[] enemyCoords = {100,100};
-    static ArrayList<String> enemyPath = new ArrayList<String>();
-    static boolean convertImage = true;
-    static String mazeName = "maze.gif";
+
+    //Control Panel
+    static int[] enemyCoords = {100,100}; //Starting position of red dot aka enemy
+    static String mazeName = "TestingImages/maze.gif"; //Name of image to load and scan
+    static int enemySpeed = 9; //Movement speed of enemy (pixels per frame)
+    static int enemySize = 2; //Size of enemy
     static boolean shadows = false; //Are there shadows in the picture?
+
+    //Initialize global variables
     static int enemyPathIndex = 0;
-    static int enemySpeed = 9;
-    static int enemySize = 2;
+    static ArrayList<String> enemyPath = new ArrayList<String>();
     static int gridSize = enemySize;
     static int[][] grid = new int[0][0];
     static JFrame window = new JFrame("PathFinding Proof of Concept by Mohammed");
@@ -34,30 +50,31 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
     static Image img;
     static String target = "";
     static Random generator = new Random();
+
+
     public static void main(String[] args) {
         try {
+            //Load image and perform any scaling and processing needed
             img = ImageIO.read(new File(System.getProperty("user.dir")+"/src/"+mazeName));
             double factor = img.getWidth(null)/(double)img.getHeight(null);
-            //ImageFilter preOp = new ImageFilter((BufferedImage)img);
-            //img=preOp.getFilteredImage();
             img = OtsuBinarize.binarizeImage((BufferedImage)img,shadows);
             int desiredHeight = 800;
             if (img.getHeight(null)*2<desiredHeight){
                 desiredHeight=img.getHeight(null)*2;
             }else if (img.getHeight(null)<desiredHeight){
                 desiredHeight=img.getHeight(null);
-
             }
+            //Resizing image to fit screen while maintaining aspect ratio
             while (img.getHeight(null)%(desiredHeight/gridSize) !=0 ||img.getWidth(null)%((desiredHeight*factor)/gridSize) !=0){
                 desiredHeight+=gridSize;
-                System.out.println(desiredHeight);
             }
 
             window.setSize((int)(desiredHeight*factor),desiredHeight);
         } catch (IOException e) {
             //window.setSize(800, 800);
         }
-        //window.setSize(450, 600);
+
+        //Initialing JFrame
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         GameProof game = new GameProof();
         window.add(game);
@@ -66,10 +83,8 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
         window.addMouseMotionListener(game);
         window.setVisible(true);
 
-        //grid = new int[window.getHeight()/gridSize][window.getWidth()/gridSize];
-       // if(convertImage){ImageFilter temp = new ImageFilter(mazeName);}
+        //Creating 2D array from image
         grid=ImageScanner.scanImage(mazeName,shadows,window.getHeight()/gridSize,window.getWidth()/gridSize);
-
 
         Timer t = new Timer(35,game);
         t.start();
@@ -77,8 +92,10 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
 
     //Cleans the path returned from the path finding algorithm
     private static ArrayList<String> cleanPath(ArrayList<String> path){
-
+        //If no path was found return empty array
         if (path.get(0).equals("nopath")){return new ArrayList<String>();}
+
+        //Init variables before loop
         ArrayList<String> newPath = new ArrayList<String>();
         int lock;
         String y = path.get(0).split(" ")[0];
@@ -101,24 +118,27 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
                 }else{
                     lock = 1;
                 }
-
             }
-
         }
         return newPath;
     }
 
     public static void moveEnemy(){
         if(enemyPath.size()<1 || pause){return;}
+
         //Target coords are determined, x and y coords are flipped from the enemyPath
         int[] targetCoords = {Integer.valueOf(enemyPath.get(enemyPathIndex).split(" ")[1])*gridSize,Integer.valueOf(enemyPath.get(enemyPathIndex).split(" ")[0])*gridSize};
+
+        //If the enemy has reached it's target
         if(enemyCoords[0] == targetCoords[0]&&enemyCoords[1] == targetCoords[1]){
+            //If there are more targets then assign it the next target
             if (enemyPathIndex<enemyPath.size()-1) {
                 enemyPathIndex++;
-            }else{
+            }else{ //else reset variables
                 enemyPathIndex=0;
                 enemyPath.clear();
                 target="";
+                //If the auto mode is enabled then automatically create a new path for the enemy
                 if (auto){newEnemyPath();}
                 return;
             }
@@ -139,17 +159,13 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
 
 
 
-    // linkwdlit <In t> nME = LINKED LIST
-    //while loop(name){
-    // int current  = name.poll;
-    // }
+
     @Override
     protected void paintComponent(Graphics g) {
+        //Draw background and grid
         g.setColor(Color.white);
         g.fillRect(0, 0, getWidth(), getHeight());
         drawGrid(g);
-        //g.drawImage(img,0,0,getWidth(),getHeight(),null);
-
 
         //Drawing Target
         if (target!=""){
@@ -213,6 +229,7 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
         repaint();
     }
 
+    //Assigns the enemy a new target and calculate the new path
     @Override
     public void mouseClicked(MouseEvent e) {
         if (editMode || auto || pause){return;}
@@ -224,15 +241,18 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
 
     }
 
+    /**
+     * Assigns the enemy a random target and calculate the best path to it (only available in 'auto' mode)
+     */
     private static void newEnemyPath(){
         if (auto){
-
-
-
+            //Randomly generate new target location and calculate path
             target=String.valueOf(generator.nextInt(grid.length))+" "+String.valueOf(generator.nextInt(grid[0].length));
             ArrayList<String> path = PathFinding.findPath(grid,
                     String.valueOf((int) (enemyCoords[1] / gridSize)) + " " + String.valueOf((int) (enemyCoords[0] / gridSize)),
                     target);
+
+            //Generate new target locations while there is no path to the current target location or the current target location location is inside a wall
             while (path.get(0)=="nopath" || grid[Integer.valueOf(target.split(" ")[0])][Integer.valueOf(target.split(" ")[1])]==1){
                 target=String.valueOf(generator.nextInt(grid.length))+" "+String.valueOf(generator.nextInt(grid[0].length));
                 path = PathFinding.findPath(grid,
@@ -240,14 +260,17 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
                         target);
             }
             enemyPath = cleanPath(path);
-
-
         }
     }
 
+    /**
+     * Gets called when the user edit's the maze, used to ensure the path is still valid
+     */
     private static void recalculate(){
         System.out.println("Recalc: ");
         System.out.println(enemyPath);
+
+        //Clear the current path and recalculate from current location
         if (enemyPath.size()<1){return;}
         target = enemyPath.get(enemyPath.size()-1);
         enemyPath.clear();
@@ -260,6 +283,7 @@ public class GameProof extends JComponent implements MouseListener, MouseMotionL
     }
 
     @Override
+    //Handle toggling between modes
     public void keyPressed(KeyEvent e) {
         if(e.getKeyChar()=='e'){
             editMode=!editMode;

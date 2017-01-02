@@ -5,12 +5,14 @@
  *
  */
 
-import java.awt.Color;
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
 
+
+//Code obtained from the internet for improving image quality to better scans
 public class OtsuBinarize {
 
     private static BufferedImage original, grayscale, binarized;
